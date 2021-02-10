@@ -35,9 +35,7 @@ int main()
 	char *src, *dst, *prog;
 	int hermes_fd;
 	int ret;
-	struct hermes_download_prog_ioctl_argp argp = {
-		.len = BUF_SIZE,
-	};
+	struct hermes_download_prog_ioctl_argp argp;
 	struct iovec iov;
 
 	/* Open device */
@@ -61,10 +59,14 @@ int main()
 
 	memset(src, 0xFF, BUF_SIZE);
 	memset(dst, 0x00, BUF_SIZE);
-	memset(prog, 0x55, BUF_SIZE); /* Not really an eBPF program... */
+
+	/* Create an eBPF program with a single exit instruction */
+	prog[0] = 0x95;
+	memset(prog + 1, 0, 7);
 
 	/* Send the eBPF program */
 	argp.prog = (uint64_t) prog;
+	argp.len = 8;
 	ret = ioctl(hermes_fd, HERMES_DOWNLOAD_PROG_IOCTL, &argp);
 	if (ret) {
 		perror("Failed to write eBPF program");
